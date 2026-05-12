@@ -1,4 +1,4 @@
-# BidMart Current Architecture
+# BidMart Architecture
 
 In this document, we discuss the architecture of our project, BidMart.
 We implement BidMart as a microservice-based marketplace platform. The system
@@ -68,3 +68,101 @@ At the same time, it highlights our current architectural constraint that the
 system is still strongly tied to a single-node local deployment model.
 
 ![Current Deployment Diagram](assets/3.%20Current%20Deployment%20Diagram.png)
+
+## Future Architecture
+
+In our future architecture, we keep the same business service boundaries, but
+we change the runtime model so BidMart can survive growth and failure scenarios
+more gracefully. The main architectural shift is to move away from a
+single-instance development-style deployment and toward a production shape with
+replication, better event recovery, managed storage, and platform-level
+observability.
+
+We derived these future diagrams from the risks we discovered during our
+discussion. High-traffic catalogue reads, bidding spikes near auction
+deadlines, payment settlement uncertainty, and weak operational visibility are
+our most important concerns. The future design therefore adds horizontal
+scaling, a more robust eventing setup, a search read model, object storage with
+CDN delivery, and better incident detection across the platform.
+
+## Future Context Diagram
+
+The future context diagram still centers on buyers and sellers, but it adds the
+supporting operational capabilities needed for a successful marketplace.
+We treat platform operations as a first-class concern because growth means we
+must actively monitor health, incidents, and recovery workflows instead of only
+running the system locally.
+
+![Future Context Diagram](assets/4.%20Future%20Context%20Diagram.png)
+
+## Future Container Diagram
+
+In the future container diagram, we show the main structural improvements. A CDN and
+load balancer sit in front of the frontend and gateway, services can scale
+horizontally, and supporting platform services such as search, object storage,
+observability, and secrets management are introduced to reduce pressure on the
+transactional path.
+
+![Future Container Diagram](assets/5.%20Future%20Container%20Diagram.png)
+
+## Future Deployment Diagram
+
+In the future deployment diagram, we make the production intent explicit. Instead of
+one local node, traffic is distributed across replicated gateway and service
+instances, persistent messaging is treated as clustered infrastructure, and the
+data platform includes backup, monitoring, and recovery-oriented capabilities.
+
+![Future Deployment Diagram](assets/6.%20Future%20Deployment%20Diagram.png)
+
+## Risk Assessment Tables
+
+Before the detailed risk storming discussion, we assessed the future
+architecture using a simple impact-and-likelihood matrix and then mapped the
+resulting scores onto the most important BidMart workflows.
+
+### Risk Matrix
+
+| Impact \\ Likelihood | Low (1) | Medium (2) | High (3) |
+| --- | --- | --- | --- |
+| Low impact (1) | 1 | 2 | 3 |
+| Medium impact (2) | 2 | 4 | 6 |
+| High impact (3) | 3 | 6 | 9 |
+
+### Risk Assessment
+
+| Risk criteria | Customer registration and login | Catalogue browse and search | Auction bidding and close | Payment and order completion | Total risk |
+| --- | --- | --- | --- | --- | --- |
+| Scalability | 2 | 6 | 6 | 2 | 16 |
+| Availability | 3 | 4 | 6 | 4 | 17 |
+| Performance | 2 | 6 | 4 | 2 | 14 |
+| Security | 6 | 2 | 2 | 6 | 16 |
+| Data integrity | 3 | 3 | 9 | 9 | 24 |
+| Total risk | 16 | 21 | 27 | 23 | 87 |
+
+### Filtering High Risk
+
+We treated only scores `>= 6` as high-risk items that required direct
+architectural mitigation.
+
+| Risk criteria | Customer registration and login | Catalogue browse and search | Auction bidding and close | Payment and order completion | Total high risk |
+| --- | --- | --- | --- | --- | --- |
+| Scalability | - | 6 | 6 | - | 12 |
+| Availability | - | - | 6 | - | 6 |
+| Performance | - | 6 | - | - | 6 |
+| Security | 6 | - | - | 6 | 12 |
+| Data integrity | - | - | 9 | 9 | 18 |
+| Total high risk | 6 | 12 | 21 | 15 | 54 |
+
+### Risk Direction
+
+In the table below, we show the current score and the expected residual score
+after the future architecture improvements are applied.
+
+| Risk criteria | Customer registration and login | Catalogue browse and search | Auction bidding and close | Payment and order completion | Total direction |
+| --- | --- | --- | --- | --- | --- |
+| Scalability | 2 -> 2 | 6 -> 3 | 6 -> 4 | 2 -> 2 | 16 -> 11 |
+| Availability | 3 -> 2 | 4 -> 3 | 6 -> 3 | 4 -> 3 | 17 -> 11 |
+| Performance | 2 -> 2 | 6 -> 3 | 4 -> 3 | 2 -> 2 | 14 -> 10 |
+| Security | 6 -> 3 | 2 -> 2 | 2 -> 2 | 6 -> 4 | 16 -> 11 |
+| Data integrity | 3 -> 2 | 3 -> 2 | 9 -> 4 | 9 -> 4 | 24 -> 12 |
+| Total risk | 16 -> 11 | 21 -> 13 | 27 -> 16 | 23 -> 15 | 87 -> 55 |
