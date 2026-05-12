@@ -312,3 +312,17 @@ The codebase follows the standard Spring Boot MVC pattern. It revolves around tw
 
 ![catalogue component](<assets/18. bidmart-architecture-catalogue component.png>)
 ![catalogue domain model](<assets/19. bidmart-architecture-Code 1 CatalogueDomain Model.png>)
+
+## Individual Work: Wallet Service
+
+### Wallet Component
+
+![wallet component](./assets/20.%20wallet-component-diagram.png)
+
+1. This diagram illustrates the internal architecture and separation of concerns within the Wallet Service container. It demonstrates a clean architectural flow where external REST API calls are first handled by the HTTP Router layer, which validates inputs before passing them to the core Wallet and Reconciliation services. These core services act as orchestrators that execute the primary business use cases, communicating with external gateways like Midtrans and relying on the Persistence layer to handle all PostgreSQL database operations, ensuring that business logic remains entirely decoupled from routing and data storage mechanisms.
+
+### Wallet Domain
+
+![wallet domain](./assets/21.%20wallet-domain.png)
+
+2. This class diagram highlights the structural boundary between the application's pure business logic and its database representation. On the left, the Domain Layer encapsulates core entities like Wallet and the Money value object, enforcing strict financial rules (such as validating sufficient balances during a withdraw or hold action) entirely independent of any database framework. On the right, the Persistence Layer defines raw data structures like WalletRow that perfectly mirror the SQL tables, using explicit mapping implementations to safely translate these raw database records into the validated domain entities used by the system.
