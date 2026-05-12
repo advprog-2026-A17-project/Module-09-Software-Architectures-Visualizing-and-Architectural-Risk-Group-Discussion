@@ -301,3 +301,14 @@ settlement or hold release, and the outbox relay that publishes
 `auction.ended.v1` to RabbitMQ.
 
 ![Auction Code Close Auction Flow](assets/17.%20Auction%20Code%20Close%20Auction%20Flow.png)
+
+## Individual Work: Catalogue Service
+
+1. Component Diagram
+The Catalogue Service utilizes a layered architecture. Incoming requests from the API Gateway pass through the Auth Interceptor for token validation before reaching the Controllers. The Controllers delegate business logic to the Service layer, which then interacts with the Repositories to perform read/write operations on the PostgreSQL database. Additionally, the service implements asynchronous communication via RabbitMQ. The Listing Event Publisher broadcasts events (like ListingCreated), while the Auction Event Consumer listens for external events (like BidPlaced from the Auction Service) to update listing statuses automatically.
+
+2. Code Diagram
+The codebase follows the standard Spring Boot MVC pattern. It revolves around two main entities, Listing and Category, connected by a Many-to-One relationship. To maintain loose coupling and high testability, the business logic is abstracted using interfaces (ListingService and CategoryService) that are realized by concrete implementation classes. This Service layer acts as the central coordinator, managing database transactions and interacting with the RabbitMQ publisher/consumer classes to keep the system state synchronized.
+
+![catalogue component](<assets/18. bidmart-architecture-catalogue component.png>)
+![catalogue domain model](<assets/19. bidmart-architecture-Code 1 CatalogueDomain Model.png>)
