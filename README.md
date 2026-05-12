@@ -256,3 +256,48 @@ The diagram below summarizes why the selected changes were chosen and how they
 improve resilience, consistency, scalability, and diagnosis across BidMart.
 
 ![Architecture Modification Justification](assets/13.%20Architecture%20Modification%20Justifciation.png)
+
+## Individual Work: Auction Service
+
+For my individual work, I focus on `bidmart-auction-service-rust`. This module
+owns auction creation, bid placement, auction closure, bid validation, wallet
+hold coordination, listing validation, and auction domain event publication.
+Because I am limited to four screenshots, I use one combined structural diagram
+and three code-flow diagrams that capture the most important auction behaviors.
+
+### Auction Service Overview
+
+In this overview, I combine the individual container view and the component
+view into one diagram. It shows how the auction service sits behind the API
+Gateway, how it depends on the catalogue and wallet services, how it persists
+state in PostgreSQL, and how its internal router, service, domain, repository,
+closure scheduler, and outbox publisher work together.
+
+![Auction Service Overview](assets/14.%20Auction%20Components.png)
+
+### Code Diagram 1: Create Auction Flow
+
+This code diagram shows how a seller request becomes a persisted auction. The
+important steps are request validation, listing ownership and status
+verification, and writing the initial auction aggregate into the auction data
+store.
+
+![Auction Code Create Auction Flow](assets/15.%20Auction%20Code%20Create%20Auction%20Flow.png)
+
+### Code Diagram 2: Place Bid Flow
+
+This code diagram captures the most critical runtime path in the auction
+service. It shows concurrency control, listing validation, domain rule
+evaluation, wallet hold creation, previous-hold release, and the insertion of a
+`BidPlaced` outbox event for downstream consumers.
+
+![Auction Code Place Bid Flow](assets/16.%20Auction%20Code%20Place%20Bid%20Flow.png)
+
+### Code Diagram 3: Close Auction Flow
+
+This code diagram explains how expired auctions are closed. It highlights the
+interaction between the closure scheduler, outcome determination, wallet
+settlement or hold release, and the outbox relay that publishes
+`auction.ended.v1` to RabbitMQ.
+
+![Auction Code Close Auction Flow](assets/17.%20Auction%20Code%20Close%20Auction%20Flow.png)
