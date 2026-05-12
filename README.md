@@ -166,3 +166,93 @@ after the future architecture improvements are applied.
 | Security | 6 -> 3 | 2 -> 2 | 2 -> 2 | 6 -> 4 | 16 -> 11 |
 | Data integrity | 3 -> 2 | 3 -> 2 | 9 -> 4 | 9 -> 4 | 24 -> 12 |
 | Total risk | 16 -> 11 | 21 -> 13 | 27 -> 16 | 23 -> 15 | 87 -> 55 |
+
+## Risk Storming Explanation
+
+We applied risk storming to BidMart because the system is already
+distributed and several business-critical workflows cross service boundaries.
+Authentication relies on OAuth and email verification, auctions depend on
+timing and consistency, wallet operations depend on third-party payment
+behavior, and orders plus notifications depend on asynchronous event delivery.
+Once we assume the project becomes successful and traffic grows, the
+architecture must be evaluated not only for correctness, but also for how it
+behaves under load, delay, duplication, and partial service failure.
+
+In our discussion, we focused on the most important end-to-end
+scenarios: catalogue browsing, bidding near the auction deadline, auction
+closing, wallet settlement, and order notification delivery. Those scenarios
+were mapped to our current architecture to identify hot spots. The largest
+risks were gateway and service single points of failure, catalogue search load
+on the transactional database, lost or duplicated RabbitMQ events, payment
+callback uncertainty, and weak operational visibility when something goes
+wrong. This made risk storming useful because it connected technical failure
+points directly to user-facing marketplace flows.
+
+We justified the future architecture because each modification directly reduces
+one or more of those risks. Replication and ingress reduce availability
+bottlenecks, durable messaging with retries and dead-letter queues makes event
+failures recoverable, a search index and CDN reduce load on transactional
+services, and observability plus payment reconciliation make incidents easier to
+detect and resolve. The goal is not to redesign BidMart from scratch, but to
+make the existing service boundaries reliable enough for success.
+
+### Risk Summary
+
+| Risk area | Current concern | Future mitigation |
+| --- | --- | --- |
+| Availability | One gateway and one service instance can become a bottleneck or failure point. | Load balancer and service replicas. |
+| Event consistency | Auction and order workflows can suffer from lost or duplicated events. | Durable RabbitMQ, retry queues, DLQ, and idempotent consumers. |
+| Catalogue scalability | Search traffic can overload the transactional catalogue database. | Search index for read-heavy discovery. |
+| Media delivery | Listing images should not stay on the transactional application path. | Object storage with CDN delivery. |
+| Payment reliability | Midtrans callbacks and settlement state can become unclear during failure. | Payment reconciliation and explicit payment-state handling. |
+| Diagnosis | Failures are hard to understand from container logs alone. | Shared observability with logs, metrics, traces, and alerts. |
+
+### Risk Analysis
+
+This diagram summarizes the main scenarios, architectural risks, and the
+modifications chosen to address them.
+
+![Risk Analysis](assets/7.%20Risk%20Analysis.png)
+
+### Risk Matrix Diagram
+
+The image below shows the same impact-likelihood scoring model in visual form.
+
+![Risk Matrix](assets/8.%20Risk%20Matrix.png)
+
+### Risk Storming Overview
+
+This overview shows the structure of the risk storming activity: identify the
+risk areas, build consensus on what matters most, and then focus mitigation on
+the highest-value changes.
+
+![Risk Storming Overview](assets/9.%20Risk%20Storming%20Overview.png)
+
+### Risk Storming: Identification
+
+In the identification step, we marked the components and interactions
+most exposed to scale, availability, consistency, and observability problems.
+
+![Risk Storming Identification](assets/10.%20Risk%20Storming%20Identification.png)
+
+### Risk Storming: Consensus
+
+After identification, we aligned on the final high-priority hotspots that
+deserved immediate architectural attention.
+
+![Risk Storming Consensus](assets/11.%20Risk%20Storming%20Consensus.png)
+
+### Risk Storming: Mitigation
+
+The mitigation step connected those agreed risks to concrete architectural
+changes, so the future architecture was grounded in operational problems rather
+than generic improvement ideas.
+
+![Risk Storming Mitigation](assets/12.%20Risk%20Storming%20Mitigation.png)
+
+### Architecture Modification Justification
+
+The diagram below summarizes why the selected changes were chosen and how they
+improve resilience, consistency, scalability, and diagnosis across BidMart.
+
+![Architecture Modification Justification](assets/13.%20Architecture%20Modification%20Justifciation.png)
